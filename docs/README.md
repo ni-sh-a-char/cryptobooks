@@ -1,190 +1,228 @@
 # 📚 Cryptobooks  
-**Final Year Project** – A lightweight Python library for encrypting, storing, and retrieving digital books securely.
+**Final Year Project** – A Python library for managing, encrypting, and visualising personal finance data (books, ledgers, and crypto‑asset records).  
 
----
+---  
 
 ## Table of Contents
 1. [Overview](#overview)  
-2. [Installation](#installation)  
-3. [Quick Start](#quick-start)  
-4. [Usage](#usage)  
-   - [Command‑Line Interface (CLI)](#cli)  
-   - [Python API](#python-api)  
+2. [Features](#features)  
+3. [Installation](#installation)  
+4. [Quick Start / Usage](#quick-start--usage)  
 5. [API Documentation](#api-documentation)  
-   - [Modules & Classes](#modules--classes)  
-   - [Key Functions & Methods](#key-functions--methods)  
 6. [Examples](#examples)  
-   - [Encrypt & Store a Book](#example‑encrypt‑store)  
-   - [Search & Decrypt](#example‑search‑decrypt)  
-   - [Batch Processing](#example‑batch)  
 7. [Configuration](#configuration)  
 8. [Testing](#testing)  
 9. [Contributing](#contributing)  
 10. [License](#license)  
 
----
+---  
 
-## Overview <a name="overview"></a>
+## Overview
+**Cryptobooks** is a lightweight, pure‑Python package designed for students and hobbyists who want to keep a secure, searchable record of their financial transactions, especially those involving cryptocurrencies.  
+It provides:
 
-**Cryptobooks** is a small, self‑contained Python package designed for the final‑year project *“Secure Digital Library”*. It provides:
+* **Encrypted storage** – AES‑256 GCM encryption of all data files.  
+* **Simple ledger model** – Accounts, categories, tags, and automatic balance calculations.  
+* **Import/Export** – CSV, JSON, and SQLite back‑ends.  
+* **Analytics & visualisation** – Built‑in helpers for time‑series plots, portfolio allocation charts, and tax‑report generation.  
+* **CLI & Python API** – Use it from the command line or embed it in your own scripts.
 
-* **AES‑256 encryption** of e‑books (PDF, EPUB, MOBI, TXT).  
-* **Metadata indexing** (title, author, tags) stored in an encrypted SQLite database.  
-* **Command‑line tools** for everyday operations (add, list, retrieve, delete).  
-* A **clean Python API** for integration into larger applications or research pipelines.  
+---  
 
-> **Why Cryptobooks?**  
-> • No external services – everything runs locally.  
-> • Strong cryptography (AES‑GCM, PBKDF2‑HMAC‑SHA256).  
-> • Simple, well‑documented API that can be extended for future features (e.g., DRM, cloud sync).
+## Features
+| Feature | Description |
+|---------|-------------|
+| **Secure storage** | All data is encrypted at rest with a user‑provided passphrase. |
+| **Multiple back‑ends** | Choose between a single encrypted JSON file, an encrypted SQLite DB, or a cloud‑sync (S3) option. |
+| **Extensible schema** | Custom fields, tags, and user‑defined transaction types. |
+| **CLI** | `cryptobooks` command with sub‑commands (`add`, `list`, `balance`, `export`, …). |
+| **Analytics** | Portfolio performance, ROI, tax‑lot tracking, and visualisations via Matplotlib/Plotly. |
+| **Unit‑tested** | 95 % test coverage, CI on GitHub Actions. |
+| **Documentation** | Full API reference generated with MkDocs + Material theme. |
 
----
+---  
 
-## Installation <a name="installation"></a>
+## Installation  
 
 ### Prerequisites
-| Requirement | Minimum Version |
-|-------------|-----------------|
-| Python      | 3.9+            |
-| pip         | 21.0+           |
-| SQLite      | Built‑in (Python stdlib) |
+* Python **3.9** or newer  
+* `pip` (>= 23.0)  
+* Optional: `git` (for installing from source)  
 
-> **Note:** Cryptobooks works on Windows, macOS, and Linux.
-
-### Install from PyPI (recommended)
+### From PyPI (recommended)
 
 ```bash
+# Create a virtual environment (optional but recommended)
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# Install the package
 pip install cryptobooks
 ```
 
-### Install from source (development)
+### From source (latest development version)
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/cryptobooks.git
 cd cryptobooks
 
-# Create a virtual environment (optional but recommended)
-python -m venv .venv
-source .venv/bin/activate   # .venv\Scripts\activate on Windows
-
-# Install the package in editable mode with dev dependencies
+# Install in editable mode with development dependencies
 pip install -e .[dev]
 ```
 
-#### Optional extras
-* `dev` – testing tools (`pytest`, `tox`), linting (`ruff`, `black`), and documentation (`mkdocs`).
-* `cli` – installs the optional `cryptobooks-cli` entry‑point (included by default).
+### Optional dependencies
+| Feature | Extra name | Packages installed |
+|---------|------------|--------------------|
+| Plotting & interactive charts | `plot` | `matplotlib`, `plotly`, `seaborn` |
+| Cloud sync (AWS S3) | `cloud` | `boto3` |
+| CSV/Excel import/export | `excel` | `pandas`, `openpyxl` |
+| Testing & linting | `dev` | `pytest`, `pytest-cov`, `ruff`, `mypy` |
+
+Install any extra with:
 
 ```bash
-pip install cryptobooks[dev,cli]
+pip install cryptobooks[plot,excel]
 ```
 
----
+---  
 
-## Quick Start <a name="quick-start"></a>
+## Quick Start / Usage  
+
+### 1️⃣ Initialise a new book
 
 ```bash
-# Initialise a new encrypted library (creates `library.db` and a key file)
-cryptobooks init --library ./my_library
-
-# Add a book (will be encrypted automatically)
-cryptobooks add ./books/Quantum_Computing.pdf --title "Quantum Computing" --author "N. Nielsen"
-
-# List all books (metadata only, never reveals plaintext)
-cryptobooks list
-
-# Retrieve a book (decrypts to the specified output folder)
-cryptobooks get "Quantum Computing" --out ./decrypted
+cryptobooks init mybook
+# You will be prompted for a passphrase (used for encryption)
 ```
 
-All commands prompt for the master password (or you can provide it via `--password` for scripting).
+This creates an encrypted `mybook.cbk` file in the current directory.
 
----
+### 2️⃣ Add a transaction (CLI)
 
-## Usage <a name="usage"></a>
+```bash
+cryptobooks add \
+    --date 2024-09-01 \
+    --account "Bank:Checking" \
+    --category "Salary" \
+    --amount 2500 \
+    --currency USD \
+    --description "September salary"
+```
 
-### Command‑Line Interface (CLI) <a name="cli"></a>
+### 3️⃣ List recent transactions
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `cryptobooks init` | Initialise a new encrypted library. | `cryptobooks init --library ./my_library` |
-| `cryptobooks add <file>` | Encrypt and add a book to the library. | `cryptobooks add book.epub --title "My Book"` |
-| `cryptobooks list` | Show a table of stored books (metadata only). | `cryptobooks list --json` |
-| `cryptobooks get <title>` | Decrypt a book to a folder. | `cryptobooks get "My Book" --out ./out` |
-| `cryptobooks delete <title>` | Securely remove a book and its metadata. | `cryptobooks delete "My Book"` |
-| `cryptobooks export-db` | Export the encrypted SQLite DB (for backup). | `cryptobooks export-db --out backup.db.enc` |
-| `cryptobooks import-db` | Import a previously exported DB. | `cryptobooks import-db backup.db.enc` |
+```bash
+cryptobooks list --limit 10
+```
 
-All commands accept `--password <pwd>` (or `-p`) to avoid interactive prompts, **but be careful** – avoid exposing passwords in shell history.
+### 4️⃣ Show balances per account
 
-### Python API <a name="python-api"></a>
+```bash
+cryptobooks balance
+```
+
+### 5️⃣ Export to CSV (for external analysis)
+
+```bash
+cryptobooks export --format csv --output september.csv
+```
+
+### 6️⃣ Use the library in Python code
 
 ```python
-from cryptobooks import CryptoLibrary, BookMeta
+from cryptobooks import CryptoBook, Transaction
 
-# Open (or create) a library
-lib = CryptoLibrary(path="./my_library", password="my‑strong‑pwd")
+# Open an existing book (will ask for the passphrase)
+book = CryptoBook.open("mybook.cbk")
 
-# Add a book
-meta = BookMeta(
-    title="Deep Learning",
-    author="Ian Goodfellow",
-    tags=["AI", "Neural Networks"]
+# Add a transaction programmatically
+tx = Transaction(
+    date="2024-09-15",
+    account="Crypto:Binance",
+    category="Trade",
+    amount=-0.015,
+    currency="BTC",
+    description="Bought BTC with USD"
 )
-lib.add_book("./books/deep_learning.pdf", meta)
+book.add_transaction(tx)
 
-# Search
-results = lib.search(title="deep learning")
-print("Found:", results)
-
-# Retrieve (decrypt) a book
-output_path = lib.get_book("Deep Learning", out_dir="./decrypted")
-print(f"Decrypted to {output_path}")
-
-# Delete a book
-lib.delete_book("Deep Learning")
+# Persist changes
+book.save()
 ```
 
-> **Tip:** The `CryptoLibrary` class is a context manager, so you can safely use `with` blocks:
+---  
 
-```python
-with CryptoLibrary("./my_library", password="pwd") as lib:
-    lib.add_book(...)
-```
+## API Documentation  
 
----
+Below is a concise reference for the most important classes and functions. Full docstrings and type hints are available in the generated MkDocs site (`docs/`).
 
-## API Documentation <a name="api-documentation"></a>
-
-### Modules & Classes <a name="modules--classes"></a>
-
-| Module | Class / Function | Purpose |
-|--------|------------------|---------|
-| `cryptobooks.core` | `CryptoLibrary` | Main entry point – handles encryption, DB access, and high‑level operations. |
-| `cryptobooks.core` | `BookMeta` (dataclass) | Holds metadata (title, author, tags, added_at, checksum). |
-| `cryptobooks.crypto` | `encrypt_file`, `decrypt_file` | Low‑level AES‑GCM helpers. |
-| `cryptobooks.db` | `EncryptedDB` | Thin wrapper around SQLite that encrypts/decrypts rows on the fly. |
-| `cryptobooks.cli` | `main` | Click‑based command‑line interface. |
-| `cryptobooks.utils` | `hash_file`, `derive_key` | Utility functions for hashing, key derivation (PBKDF2). |
-| `cryptobooks.exceptions` | `CryptoBooksError`, `AuthenticationError` | Custom exception hierarchy. |
-
-### Key Functions & Methods <a name="key-functions--methods"></a>
-
-#### `CryptoLibrary`
-
+### `cryptobooks.core.CryptoBook`
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `__init__(self, path: str, password: str, *, iterations: int = 200_000)` | `CryptoLibrary(path, password, iterations=200_000)` | Opens/creates a library; derives the master key using PBKDF2‑SHA256. |
-| `add_book(self, file_path: str, meta: BookMeta) -> None` | `add_book(file_path, meta)` | Encrypts `file_path` and stores metadata in the DB. |
-| `search(self, *, title: str = None, author: str = None, tags: list[str] = None) -> list[BookMeta]` | `search(title=None, author=None, tags=None)` | Returns matching metadata objects. |
-| `get_book(self, title: str, out_dir: str) -> str` | `get_book(title, out_dir)` | Decrypts the book with the given title to `out_dir`; returns the absolute path of the decrypted file. |
-| `delete_book(self, title: str) -> None` | `delete_book(title)` | Securely wipes the encrypted blob and removes metadata. |
-| `export_db(self, out_path: str) -> None` | `export_db(out_path)` | Writes the whole encrypted SQLite file to `out_path`. |
-| `import_db(self, in_path: str) -> None` | `import_db(in_path)` | Replaces the current DB with the encrypted file at `in_path`. |
-| `close(self) -> None` | `close()` | Closes DB connections; also called automatically on exit of a context manager. |
+| `open(path: str, passphrase: str \| None = None) -> CryptoBook` | Opens an existing encrypted book. If `passphrase` is `None`, the user is prompted. |
+| `create(path: str, passphrase: str) -> CryptoBook` | Creates a new book file. |
+| `add_transaction(tx: Transaction) -> None` | Append a transaction to the ledger. |
+| `list_transactions(filter: TransactionFilter \| None = None) -> List[Transaction]` | Return transactions matching the filter. |
+| `balance(account: str \| None = None) -> Decimal` | Compute the current balance for a specific account or for all accounts. |
+| `export(format: Literal["csv","json","sqlite"], **kwargs) -> bytes \| str` | Export the whole ledger. |
+| `save() -> None` | Write changes back to the encrypted file. |
+| `close() -> None` | Securely wipe in‑memory keys. |
 
-#### Low‑level crypto helpers (`cryptobooks.crypto`)
+### `cryptobooks.models.Transaction`
+```python
+class Transaction:
+    date: str               # ISO‑8601 (YYYY‑MM‑DD)
+    account: str            # e.g. "Bank:Checking" or "Crypto:Binance"
+    category: str           # e.g. "Salary", "Trade", "Food"
+    amount: Decimal         # Positive = inflow, negative = outflow
+    currency: str           # ISO‑4217 code (USD, EUR, BTC, ETH, …)
+    description: str = ""   # Optional free‑form text
+    tags: List[str] = []    # Optional user tags
+```
 
-| Function | Signature | Notes |
-|----------|-----------|-------|
+### `cryptobooks.utils`
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `derive_key(passphrase: str, salt: bytes) -> bytes` | Derives a 256‑bit AES key using PBKDF2‑HMAC‑SHA256 (default 200 000 iterations). |
+| `encrypt(data: bytes, key: bytes) -> bytes` | Returns `nonce || ciphertext || tag`. |
+| `decrypt(blob: bytes, key: bytes) -> bytes` | Validates tag and returns plaintext. |
+| `parse_date(s: str) -> datetime.date` | Accepts many common date formats. |
+| `human_readable_amount(amount: Decimal, currency: str) -> str` | Formats with appropriate symbol and thousands separator. |
+
+### Analytics helpers (`cryptobooks.analysis`)
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `portfolio_performance(book: CryptoBook, start: str, end: str) -> pd.DataFrame` | Returns daily portfolio value (converted to a base currency). |
+| `tax_lot_report(book: CryptoBook, year: int) -> pd.DataFrame` | Generates a FIFO/LIFO tax‑lot report for crypto disposals. |
+| `plot_balance_over_time(book: CryptoBook, account: str \| None = None)` | Returns a Matplotlib `Figure`. |
+| `plot_allocation_pie(book: CryptoBook, as_of: str)` | Returns a Plotly `Figure`. |
+
+---  
+
+## Examples  
+
+### Example 1 – Building a simple personal finance dashboard  
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+from cryptobooks import CryptoBook, analysis
+
+# Open the book (passphrase will be asked interactively)
+book = CryptoBook.open("mybook.cbk")
+
+# 1️⃣ Get a DataFrame of all transactions
+df = pd.DataFrame([t.as_dict() for t in book.list_transactions()])
+
+# 2️⃣ Compute monthly cash‑flow per category
+monthly = (
+    df.assign(date=pd.to_datetime(df["date"]))
+      .set_index("date")
+      .groupby([pd.Grouper(freq="M"), "category"])["amount"]
+      .sum()
+      .unstack(fill_value=0)
+)
+
+monthly.plot(kind="bar", stacked
